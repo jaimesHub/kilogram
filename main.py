@@ -86,6 +86,13 @@ def login():
             "user": users[username]['profile'],
         })
 
+@app.route('/logout', methods=['POST'])
+def logout():
+    """UC03: Log out of the current user account."""
+    # Since JWTs are stateless, we don't need to do anything here.
+    # The client should simply discard the JWT token.
+    return api_response(message='Logout successful')
+
 
 if __name__ == "__main__":
   app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
