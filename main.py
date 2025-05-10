@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify
 from functools import wraps
 from datetime import datetime
-from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, verify_jwt_in_request, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from utils import api_response
@@ -93,6 +93,20 @@ def logout():
     # The client should simply discard the JWT token.
     return api_response(message='Logout successful')
 
+@app.route('/profile', methods=['GET'])
+def get_profile():
+    """UC04: Get the profile of the current user."""
+    try:
+        verify_jwt_in_request()
+        username = get_jwt_identity()
+        current_user = users.get(username)
+
+        if not current_user:
+            return api_response(message="User not found", status=404)
+
+        return api_response(data=current_user['profile'])
+    except Exception as e:
+        return api_response(message=f"Token is invalid: {str(e)}", status=401)
 
 if __name__ == "__main__":
   app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
