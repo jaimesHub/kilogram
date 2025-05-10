@@ -14,6 +14,31 @@ jwt = JWTManager(app)
 
 users = {}  # { username: { password: hashed_password, profile: {...} } }
 
+from functools import wraps
+def token_required(fn):
+    """Decorator for authenticate API Using JWT token."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            # Check if the JWT token is valid or not
+            verify_jwt_in_request()
+
+            # Get the username (identity) from the JWT token
+            username = get_jwt_identity()
+
+            # Get the user profile from the database (now inmemory)
+            current_user = users.get(username)
+
+            # Check if the user exists in the database
+            if not current_user:
+                return api_response(message="User does not exist", status=404)
+
+            # Calling the original endpoint with the authenticated user profile
+            return fn(current_user, *args, **kwargs)
+        except Exception as e:
+            return api_response(message=f"Token is invalid: {str(e)}", status=401)
+    return wrapper
+
 @app.route("/")
 def hello_world():
   """Example Hello World route."""
@@ -94,15 +119,16 @@ def logout():
     return api_response(message='Logout successful')
 
 @app.route('/profile', methods=['GET'])
-def get_profile():
+@token_required
+def get_profile(current_user):
     """UC04: Get the profile of the current user."""
     try:
-        verify_jwt_in_request()
-        username = get_jwt_identity()
-        current_user = users.get(username)
+        # verify_jwt_in_request()
+        # username = get_jwt_identity()
+        # current_user = users.get(username)
 
-        if not current_user:
-            return api_response(message="User not found", status=404)
+        # if not current_user:
+        #     return api_response(message="User not found", status=404)
 
         return api_response(data=current_user['profile'])
     except Exception as e:
