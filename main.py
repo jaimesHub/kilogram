@@ -2,12 +2,15 @@ import os
 from flask import Flask, request, jsonify
 from functools import wraps
 from datetime import datetime
-from werkzeug.security import generate_password_hash
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from utils import api_response
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key")
+
+jwt = JWTManager(app)
 
 users = {}  # { username: { password: hashed_password, profile: {...} } }
 
@@ -54,6 +57,35 @@ def register():
     users[username] = {'password': pw_hash, 'profile': profile}
 
     return api_response(data=profile, message='User registered successfully')
+
+@app.route('/login', methods=['POST'])
+def login():
+    """UC02: Login to an existing user account."""
+    data = request.get_json() or {}
+    username = data.get('username')
+    password = data.get('password')
+
+    # Check whether the username exists in the system or not
+    if username not in users:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # Verify the password which is input from user is correct or incorrect
+    if not check_password_hash(users[username]['password'], password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # If ok, create access token and refresh token
+    access_token = create_access_token(identity=username)
+    refresh_token = create_refresh_token(identity=username)
+
+    # Return response with token and user profile
+    return api_response(
+        message='Login successful',
+        data={
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            "user": users[username]['profile'],
+        })
+
 
 if __name__ == "__main__":
   app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
