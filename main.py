@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify
 from functools import wraps
 from datetime import datetime
-from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, verify_jwt_in_request, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from utils import api_response
@@ -13,6 +13,31 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key")
 jwt = JWTManager(app)
 
 users = {}  # { username: { password: hashed_password, profile: {...} } }
+
+from functools import wraps
+def token_required(fn):
+    """Decorator for authenticate API Using JWT token."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            # Check if the JWT token is valid or not
+            verify_jwt_in_request()
+
+            # Get the username (identity) from the JWT token
+            username = get_jwt_identity()
+
+            # Get the user profile from the database (now inmemory)
+            current_user = users.get(username)
+
+            # Check if the user exists in the database
+            if not current_user:
+                return api_response(message="User does not exist", status=404)
+
+            # Calling the original endpoint with the authenticated user profile
+            return fn(current_user, *args, **kwargs)
+        except Exception as e:
+            return api_response(message=f"Token is invalid: {str(e)}", status=401)
+    return wrapper
 
 @app.route("/")
 def hello_world():
@@ -93,6 +118,21 @@ def logout():
     # The client should simply discard the JWT token.
     return api_response(message='Logout successful')
 
+@app.route('/profile', methods=['GET'])
+@token_required
+def get_profile(current_user):
+    """UC04: Get the profile of the current user."""
+    try:
+        # verify_jwt_in_request()
+        # username = get_jwt_identity()
+        # current_user = users.get(username)
+
+        # if not current_user:
+        #     return api_response(message="User not found", status=404)
+
+        return api_response(data=current_user['profile'])
+    except Exception as e:
+        return api_response(message=f"Token is invalid: {str(e)}", status=401)
 
 if __name__ == "__main__":
   app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
