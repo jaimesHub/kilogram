@@ -2,14 +2,42 @@ import os
 from flask import Flask, request, jsonify
 from functools import wraps
 from datetime import datetime
-from werkzeug.security import generate_password_hash
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, verify_jwt_in_request, get_jwt_identity
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from utils import api_response
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key")
 
+jwt = JWTManager(app)
+
 users = {}  # { username: { password: hashed_password, profile: {...} } }
+
+from functools import wraps
+def token_required(fn):
+    """Decorator for authenticate API Using JWT token."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            # Check if the JWT token is valid or not
+            verify_jwt_in_request()
+
+            # Get the username (identity) from the JWT token
+            username = get_jwt_identity()
+
+            # Get the user profile from the database (now inmemory)
+            current_user = users.get(username)
+
+            # Check if the user exists in the database
+            if not current_user:
+                return api_response(message="User does not exist", status=404)
+
+            # Calling the original endpoint with the authenticated user profile
+            return fn(current_user, *args, **kwargs)
+        except Exception as e:
+            return api_response(message=f"Token is invalid: {str(e)}", status=401)
+    return wrapper
 
 @app.route("/")
 def hello_world():
@@ -54,6 +82,57 @@ def register():
     users[username] = {'password': pw_hash, 'profile': profile}
 
     return api_response(data=profile, message='User registered successfully')
+
+@app.route('/login', methods=['POST'])
+def login():
+    """UC02: Login to an existing user account."""
+    data = request.get_json() or {}
+    username = data.get('username')
+    password = data.get('password')
+
+    # Check whether the username exists in the system or not
+    if username not in users:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # Verify the password which is input from user is correct or incorrect
+    if not check_password_hash(users[username]['password'], password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # If ok, create access token and refresh token
+    access_token = create_access_token(identity=username)
+    refresh_token = create_refresh_token(identity=username)
+
+    # Return response with token and user profile
+    return api_response(
+        message='Login successful',
+        data={
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            "user": users[username]['profile'],
+        })
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    """UC03: Log out of the current user account."""
+    # Since JWTs are stateless, we don't need to do anything here.
+    # The client should simply discard the JWT token.
+    return api_response(message='Logout successful')
+
+@app.route('/profile', methods=['GET'])
+@token_required
+def get_profile(current_user):
+    """UC04: Get the profile of the current user."""
+    try:
+        # verify_jwt_in_request()
+        # username = get_jwt_identity()
+        # current_user = users.get(username)
+
+        # if not current_user:
+        #     return api_response(message="User not found", status=404)
+
+        return api_response(data=current_user['profile'])
+    except Exception as e:
+        return api_response(message=f"Token is invalid: {str(e)}", status=401)
 
 if __name__ == "__main__":
   app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
