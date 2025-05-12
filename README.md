@@ -9,7 +9,6 @@ Server should run automatically when starting a workspace. To run manually, run:
 ./devserver.sh
 ```
 
-
 ## Folder structure
 
 ```
@@ -26,4 +25,3 @@ kilogram/ # Nơi chứa toàn bộ mã nguồn dự án. Entrypoint
 ├── README.md # File Markdown chứa thông tin tổng quan về dự án, hướng dẫn cài đặt, cách chạy ứng dụng, và các thông tin hữu ích khác.
 ├── requirements.txt # File này liệt kê tất cả các thư viện Python mà dự án phụ thuộc vào. Nó được sử dụng bởi pip để cài đặt các dependencies cần thiết.
 └── tests # Thư mục này sẽ chứa các file kiểm thử (unit tests, integration tests) để đảm bảo các phần của ứng dụng hoạt động đúng như mong đợi.
-```
