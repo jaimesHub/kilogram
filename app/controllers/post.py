@@ -48,3 +48,23 @@ def get_post(current_user, post_id):
     post_data = post.to_dict()
     
     return api_response(data=post_data)
+
+@post_bp.route('/', methods=['DELETE'])
+@token_required
+def delete_post(current_user, post_id):
+    """UC09: Delete Own Post"""
+    post = Post.query.get(post_id)
+    
+    if not post or post.deleted:
+        return api_response(message="Post not found", status=404)
+        
+    if post.user_id != current_user.id:
+        return api_response(message="Unauthorized to delete this post", status=403)
+    
+    try:
+        post.deleted = True
+        db.session.commit()
+        return api_response(message="Post deleted successfully")
+    except Exception as e:
+        db.session.rollback()
+        return api_response(message=f"Error deleting post: {str(e)}", status=500)
