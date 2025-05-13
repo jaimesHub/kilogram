@@ -4,6 +4,8 @@ from functools import wraps
 
 from app.models.user import User
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 def api_response(data=None, message=None, status=200):
     """Formating JSON response for API"""
     response = {
@@ -42,3 +44,6 @@ def token_required(fn):
         except Exception as e:
             return api_response(message=f"Token is invalid: {str(e)}", status=401)
     return wrapper
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
