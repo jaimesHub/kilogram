@@ -68,3 +68,30 @@ def delete_post(current_user, post_id):
     except Exception as e:
         db.session.rollback()
         return api_response(message=f"Error deleting post: {str(e)}", status=500)
+
+@user_bp.route('/<int:user_id>/posts', methods=['GET'])
+@token_required
+def get_user_posts(current_user, user_id):
+    """UC10: Get posts of the current user with pagination."""
+    
+    # Get pagination parameters from query string
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
+    # Get posts from database with pagination
+    posts = Post.query.filter_by(user_id=user_id, deleted=False)\
+        .order_by(Post.created_at.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Prepare response data
+    response_data = {
+        'items': [post.to_dict() for post in posts.items],
+        'pagination': {
+            'page': posts.page,
+            'per_page': posts.per_page,
+            'total': posts.total,
+            'pages': posts.pages
+        }
+    }
+    
+    return api_response(data=response_data)
