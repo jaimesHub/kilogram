@@ -25,6 +25,9 @@ def create_app():
     from app.controllers.user import user_bp
     app.register_blueprint(user_bp, url_prefix='/api/users')
 
+    from app.controllers.post import post_bp
+    app.register_blueprint(post_bp, url_prefix='/api/posts')
+
     from app.controllers.upload import upload_bp
     app.register_blueprint(upload_bp, url_prefix='/api/upload')
 
