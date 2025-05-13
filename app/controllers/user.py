@@ -2,6 +2,7 @@ from flask import Blueprint, request
 
 from app.utils import api_response, token_required
 from app import db
+from app.models.user import User
 
 user_bp = Blueprint('user', __name__)
 
@@ -43,3 +44,17 @@ def edit_profile(current_user):
     except Exception as e:
         db.session.rollback()
         return api_response(message=f"Error updating profile: {str(e)}", status=500)
+
+@user_bp.route('/<int:user_id>/profile', methods=['GET'])
+@token_required
+def view_other_profile(current_user, user_id):
+    """UC06: View Other User's Profile"""
+    print(f'user_id: {user_id} - type: {type(user_id)}')
+    user = User.query.get(user_id)
+    
+    if not user:
+        return api_response(message="User not found", status=404)
+
+    print(user.to_dict())
+
+    return api_response(data=user.to_dict())
