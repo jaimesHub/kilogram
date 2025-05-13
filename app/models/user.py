@@ -49,5 +49,5 @@ class User(db.Model):
             'fullname': self.fullname,
             'bio': self.bio,
             'profile_picture': self.profile_picture,
-            'created_at': self.created_at,
+            'created_at': datetime.utcfromtimestamp(self.created_at).isoformat() if self.created_at else None,
         }
