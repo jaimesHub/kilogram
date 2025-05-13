@@ -49,7 +49,7 @@ def get_post(current_user, post_id):
     
     return api_response(data=post_data)
 
-@post_bp.route('/', methods=['DELETE'])
+@post_bp.route('/<int:post_id>', methods=['DELETE'])
 @token_required
 def delete_post(current_user, post_id):
     """UC09: Delete Own Post"""
@@ -68,3 +68,4 @@ def delete_post(current_user, post_id):
     except Exception as e:
         db.session.rollback()
         return api_response(message=f"Error deleting post: {str(e)}", status=500)
+        
