@@ -16,7 +16,7 @@ class Post(db.Model):
     def __repr__(self):
         return f'Post: {self.id}, User: {self.user_id}'
     
-    def to_dict(self):
+    def to_dict(self, include_user=False):
         """Converting post to dictionary for API response.
         Returns:
             dict: Dictionary representation of the post.
@@ -29,5 +29,9 @@ class Post(db.Model):
             'deleted': self.deleted,
             'created_at': datetime.utcfromtimestamp(self.created_at).isoformat() if self.created_at else None
         }
+
+        if include_user:
+            user = User.query.get(self.user_id)
+            data['user'] = user.to_dict()
          
         return data

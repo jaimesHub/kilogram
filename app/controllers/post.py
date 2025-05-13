@@ -8,7 +8,7 @@ post_bp = Blueprint('post', __name__)
 @post_bp.route('', methods=['POST'])
 @token_required
 def create_post(current_user):
-    """API to create a new post."""
+    """UC07: API to create a new post."""
 
     data = request.get_json() or {}
     caption = data.get('caption')
@@ -35,3 +35,16 @@ def create_post(current_user):
     except Exception as e:
         db.session.rollback()
         return api_response(message=f"Error creating post: {str(e)}", status=500)
+
+@post_bp.route('/<int:post_id>', methods=['GET'])
+@token_required
+def get_post(current_user, post_id):
+    """UC08: Get detail post by id"""
+    post = Post.query.get(post_id)
+    
+    if not post or post.deleted:
+        return api_response(message="Post not found", status=404)
+    
+    post_data = post.to_dict()
+    
+    return api_response(data=post_data)
