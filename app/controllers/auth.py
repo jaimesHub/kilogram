@@ -3,7 +3,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
-from app.utils import api_response
+from app.utils import api_response, token_required
 from app.models.user import User
 from app import db
 
@@ -80,3 +80,9 @@ def login():
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     """UC03: Log out of the current user account."""
+
+@auth_bp.route('/me', methods=['GET'])
+@token_required
+def view_own_profile(current_user):
+    """UC04: View own profile"""
+    return api_response(data=current_user.to_dict())
