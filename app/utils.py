@@ -1,6 +1,8 @@
 from flask import jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from functools import wraps
 
-from app import users
+from app.models.user import User
 
 def api_response(data=None, message=None, status=200):
     """Formating JSON response for API"""
@@ -25,11 +27,11 @@ def token_required(fn):
             # Check if the JWT token is valid or not
             verify_jwt_in_request()
 
-            # Get the username (identity) from the JWT token
-            username = get_jwt_identity()
+            # Get the user_id (identity) from the JWT token
+            user_id = get_jwt_identity()
 
-            # Get the user profile from the database (now inmemory)
-            current_user = users.get(username)
+            # Get the user profile from the database
+            current_user = User.query.get(user_id)
 
             # Check if the user exists in the database
             if not current_user:
