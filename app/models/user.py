@@ -1,5 +1,5 @@
 from app import db
-from follow import Follow
+from app.models.follow import Follow
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -54,6 +54,8 @@ class User(db.Model):
             'created_at': datetime.utcfromtimestamp(self.created_at).isoformat() if self.created_at else None,
         }
 
+        # viewer ở đây là người muốn xem profile
+        # "is_following" để kiểm tra xem viewer có đang follow user này không.
         if viewer:
             data['follower_count'] = Follow.query.filter_by(following_id=self.id).count()
             data['following_count'] = Follow.query.filter_by(follower_id=self.id).count()
