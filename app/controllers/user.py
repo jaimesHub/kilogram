@@ -57,9 +57,8 @@ def view_other_profile(current_user, user_id):
     if not user:
         return api_response(message="User not found", status=404)
 
-    print(user.to_dict())
-
-    return api_response(data=user.to_dict())
+    # return api_response(data=user.to_dict())
+    return api_response(data=user.to_dict(viewer=user))
 
 @user_bp.route('/<int:user_id>/posts', methods=['GET'])
 @token_required
