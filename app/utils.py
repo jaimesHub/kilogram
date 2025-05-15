@@ -3,6 +3,7 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from functools import wraps
 from google.cloud import storage
 import uuid
+from datetime import timedelta
 
 from app.models.user import User
 
@@ -63,3 +64,33 @@ def upload_file_to_gcs(file_obj, destination_folder):
     blob = bucket.blob(filename)
     blob.upload_from_file(file_obj, content_type=file_obj.content_type)
     return blob.public_url
+
+def generate_signed_url(filename, bucket_name, expiration_minutes=15):
+    """
+    Giả sử bucket đã được thiết lập không công khai, chúng ta có thể tạo signed URL
+    Khi nào cần ?
+        - Ảnh đại diện chỉ hiển thị sau khi người dùng đăng nhập.
+        - File video riêng tư, ví dụ video nháp chưa đăng.
+        - Tăng bảo mật cho ảnh tải từ mobile app.
+        - Giới hạn thời gian xem file, giảm nguy cơ bị phát tán URL.
+    Nếu không có yêu cầu riêng tư, việc dùng public URL vẫn là lựa chọn đơn giản và tiết kiệm chi phí hơn.
+    """
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(filename)
+
+    url = blob.generate_signed_url(
+        version="v4",
+        expiration=timedelta(minutes=expiration_minutes),
+        method="GET"
+    )
+
+    return url
+
+def delete_file_from_gcs(filename, bucket_name):
+    """UC09 – người dùng xóa bài viết, chúng ta cũng cần xóa ảnh/video khỏi bucket tương ứng.
+    """
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(filename)
+    blob.delete()
