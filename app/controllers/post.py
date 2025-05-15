@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from app import db
 from app.utils import api_response, token_required
 from app.models.post import Post
+from app.models.like import Like
 
 post_bp = Blueprint('post', __name__)
 
@@ -69,3 +70,28 @@ def delete_post(current_user, post_id):
         db.session.rollback()
         return api_response(message=f"Error deleting post: {str(e)}", status=500)
         
+@post_bp.route('/<int:post_id>/like', methods=['POST'])
+@token_required
+def like_post(current_user, post_id):
+    '''UC14: Like Post'''
+    post = Post.query.get(post_id)
+
+    if not post or post.deleted:
+        return api_response(message="Post not found", status=404)
+
+    is_liked = Like.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+    if is_liked:
+        return api_response(message="Post already liked", status=400)
+
+    new_like = Like(
+            user_id=current_user.id,
+            post_id=post_id
+        )
+
+    try:
+        db.session.add(new_like)
+        db.session.commit()
+        return api_response(message="Liked post successfully")
+    except Exception as e:
+        db.session.rollback()
+        return api_response(message=f"Error liking post: {str(e)}", status=500)
