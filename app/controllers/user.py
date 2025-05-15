@@ -115,3 +115,31 @@ def follow_user(current_user, user_id):
     except Exception as e:
         db.session.rollback()
         return api_response(message=f"Error following user: {str(e)}", status=500)
+
+@user_bp.route('/<int:user_id>/follow', methods=['DELETE'])
+@token_required
+def unfollow_user(current_user, user_id):
+    """UC12: Unfollow User."""
+    # Cannot unfollow self
+    if current_user.id == user_id:
+        return api_response(message="Cannot unfollow yourself", status=400)
+  
+    # Check target exists
+    target_user = User.query.get(user_id)
+    if not target_user:
+        return api_response(message="User does not exist", status=404)
+  
+    # Check existing follow relationship
+    existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
+    if not existing:
+        return api_response(message="Not following this user", status=400)
+  
+    # Remove follow relationship
+    try:
+        db.session.delete(existing)
+        db.session.commit()
+        return api_response(message="User unfollowed successfully")
+    except Exception as e:
+        db.session.rollback()
+        return api_response(message=f"Error unfollowing user: {str(e)}", status=500)
+  
