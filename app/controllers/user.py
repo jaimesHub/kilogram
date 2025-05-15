@@ -4,6 +4,7 @@ from app.utils import api_response, token_required
 from app import db
 from app.models.user import User
 from app.models.post import Post
+from app.models.follow import Follow
 
 user_bp = Blueprint('user', __name__)
 
@@ -86,3 +87,31 @@ def get_user_posts(current_user, user_id):
     }
     
     return api_response(data=response_data)
+
+@user_bp.route('/<int:user_id>/follow', methods=['POST'])
+@token_required
+def follow_user(current_user, user_id):
+    """UC11: Follow another user."""
+    # Cannot follow self
+    if current_user.id == user_id:
+        return api_response(message="Cannot follow yourself", status=400)
+
+    # Check target exists
+    target_user = User.query.get(user_id)
+    if not target_user:
+        return api_response(message="User does not exist", status=404)
+
+    # Check existing follow
+    existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
+    if existing:
+        return api_response(message="Already following this user", status=400)
+
+    # Create follow relationship
+    try:
+        follow = Follow(follower_id=current_user.id, following_id=user_id)
+        db.session.add(follow)
+        db.session.commit()
+        return api_response(message="User followed successfully")
+    except Exception as e:
+        db.session.rollback()
+        return api_response(message=f"Error following user: {str(e)}", status=500)
