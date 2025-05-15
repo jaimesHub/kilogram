@@ -1,10 +1,16 @@
 from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from functools import wraps
+from google.cloud import storage
+import uuid
 
 from app.models.user import User
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+BUCKET_NAME = "kilogram-media"
+client = storage.Client()
+bucket = client.bucket(BUCKET_NAME)
 
 def api_response(data=None, message=None, status=200):
     """Formating JSON response for API"""
@@ -46,4 +52,14 @@ def token_required(fn):
     return wrapper
 
 def allowed_file(filename):
+    """Check if the file extension is allowed
+    """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_file_to_gcs(file_obj, destination_folder):
+    """Upload file to Google Cloud Storage
+    """
+    filename = f"{destination_folder}/{uuid.uuid4().hex}_{file_obj.filename}"
+    blob = bucket.blob(filename)
+    blob.upload_from_file(file_obj, content_type=file_obj.content_type)
+    return blob.public_url

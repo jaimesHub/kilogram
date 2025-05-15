@@ -3,7 +3,7 @@ import time
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from app import ABSOLUTE_UPLOAD_FOLDER
-from app.utils import allowed_file, api_response
+from app.utils import allowed_file, api_response, upload_file_to_gcs
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -29,9 +29,11 @@ def upload_file():
     filepath = os.path.join(ABSOLUTE_UPLOAD_FOLDER, unique_filename)
 
     try:
-        file.save(filepath)
+        # file.save(filepath)
+        url = upload_file_to_gcs(file, "test")
+
         # Return the generated unique filename
-        return api_response(message="Upload successful", data={'filepath': filepath}, status=201)
+        return api_response(message="Upload successful", data={'filepath': url}, status=201)
     except Exception as e:
         # Log the error ideally
         print(f"Error saving file: {e}")
