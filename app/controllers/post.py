@@ -95,3 +95,26 @@ def like_post(current_user, post_id):
     except Exception as e:
         db.session.rollback()
         return api_response(message=f"Error liking post: {str(e)}", status=500)
+
+@post_bp.route('/<int:post_id>/like', methods=['DELETE'])
+@token_required
+def unlike_post(current_user, post_id):
+    '''UC15: Unlike Post'''
+    post = Post.query.get(post_id)
+
+    if not post or post.deleted:
+        return api_response(message="Post not found", status=404)
+
+    liked = Like.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+
+    if not liked:
+        return api_response(message="This post already unliked or not yet liked", status=404)
+
+    try:
+        db.session.delete(liked)
+        db.session.commit()
+        return api_response(message="Unliked post successfully")
+    except Exception as e:
+        db.session.rollback()
+        return api_response(message=f"Error unliking post: {str(e)}", status=500)
+
