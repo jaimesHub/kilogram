@@ -75,7 +75,7 @@ def get_user_posts(current_user, user_id):
     
     # Prepare response data
     response_data = {
-        'items': [post.to_dict(include_user=True, include_likes=True, current_user=current_user) for post in posts.items],
+        'items': [post.to_dict(include_author=True, include_likes=True, current_user=current_user) for post in posts.items],
         'pagination': {
             'page': posts.page,
             'per_page': posts.per_page,
