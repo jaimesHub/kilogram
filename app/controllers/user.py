@@ -13,7 +13,7 @@ user_bp = Blueprint('user', __name__)
 def get_profile(current_user):
     """UC04: Get the profile of the current user."""
     # Get the username from the JWT token
-    return api_response(data=current_user['profile'])
+    return api_response(data=current_user.to_dict())
 
 @user_bp.route('/profile', methods=['PUT'])
 @token_required
@@ -57,7 +57,6 @@ def view_other_profile(current_user, user_id):
     if not user:
         return api_response(message="User not found", status=404)
 
-    # return api_response(data=user.to_dict())
     return api_response(data=user.to_dict(viewer=current_user))
 
 @user_bp.route('/<int:user_id>/posts', methods=['GET'])
@@ -76,7 +75,7 @@ def get_user_posts(current_user, user_id):
     
     # Prepare response data
     response_data = {
-        'items': [post.to_dict() for post in posts.items],
+        'items': [post.to_dict(include_user=True, include_likes=True, current_user=current_user) for post in posts.items],
         'pagination': {
             'page': posts.page,
             'per_page': posts.per_page,

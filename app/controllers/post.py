@@ -46,7 +46,11 @@ def get_post(current_user, post_id):
     if not post or post.deleted:
         return api_response(message="Post not found", status=404)
     
-    post_data = post.to_dict()
+    post_data = post.to_dict(
+        include_user=True,
+        include_likes=True,
+        current_user=current_user
+    )
     
     return api_response(data=post_data)
 
