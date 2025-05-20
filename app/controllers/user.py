@@ -75,7 +75,7 @@ def get_user_posts(current_user, user_id):
     
     # Prepare response data
     response_data = {
-        'items': [post.to_dict(include_user=True, include_likes=True, current_user=current_user) for post in posts.items],
+        'items': [post.to_dict(include_author=True, include_likes=True, current_user=current_user) for post in posts.items],
         'pagination': {
             'page': posts.page,
             'per_page': posts.per_page,
@@ -140,4 +140,40 @@ def unfollow_user(current_user, user_id):
     except Exception as e:
         db.session.rollback()
         return api_response(message=f"Error unfollowing user: {str(e)}", status=500)
+
+@user_bp.route('/search', methods=['GET'])
+@token_required
+def search_users(current_user):
+    """UC16: Search Users by Username"""
+    username = request.args.get('username', '', type=str)
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    if not username:
+        return api_response(message="Username is required", status=400)
+
+    # users = User.query.filter_by(username=username)\
+    #     .order_by(User.created_at.desc())\
+    #     .paginate(page=page, per_page=per_page, error_out=False)
+
+    users = User.query.filter(User.username.ilike(f'%{username}%'))\
+        .order_by(User.created_at.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+
+    if not users.items:
+        return api_response(message="No users found", status=404)
+
+    response_data = {
+        'items': [user.to_dict() for user in users.items],
+        'pagination': {
+            'page': users.page,
+            'per_page': users.per_page,
+            'total': users.total,
+            'pages': users.pages
+        }
+    }
+
+    return api_response(data=response_data, status=200)
+
+# TODO: Text search:: https://develie.hashnode.dev/exploring-flask-sqlalchemy-queries 
   
