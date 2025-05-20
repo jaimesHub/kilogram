@@ -34,3 +34,13 @@ kilogram/
 ├── README.md
 ├── requirements.txt
 └── tests
+```
+
+## Testing
+
+```bash
+# Running automation testing 
+python -m unittest discover tests/
+python -m unittest tests.test_utils
+python -m unittest tests.test_utils -v
+```
