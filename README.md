@@ -43,4 +43,9 @@ kilogram/
 python -m unittest discover tests/
 python -m unittest tests.test_utils
 python -m unittest tests.test_utils -v
+
+# Running automation testing for auth
+python -m unittest discover tests/
+python -m unittest tests.test_auth
+python -m unittest tests.test_auth -v
 ```
