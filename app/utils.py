@@ -55,7 +55,7 @@ def token_required(fn):
 def allowed_file(filename):
     """Check if the file extension is allowed
     """
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS and filename.rsplit('.', 1)[0].lower() != ''
 
 def upload_file_to_gcs(file_obj, destination_folder):
     """Upload file to Google Cloud Storage
