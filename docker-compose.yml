@@ -1,0 +1,26 @@
+version: '3.8' # Phiên bản của Docker Compose
+
+services: # Nơi định nghĩa các service
+  web: # Tên service Flask của chúng ta
+    build: . # Build image từ Dockerfile trong thư mục hiện tại
+    ports:
+      - "8080:5000" # Ánh xạ cổng 8080 của máy thật vào cổng 5000 của container
+    environment: # Các biến môi trường cho service web
+      - DATABASE_URL=mysql+pymysql://root:password@db:3306/kilogram
+    depends_on: # (Tùy chọn) Khai báo service 'web' phụ thuộc 'db'
+      - db
+
+  db: # Tên service database
+    image: mysql:8.0 # Sử dụng image MySQL 8.0 có sẵn từ Docker Hub
+    restart: always # Tự động khởi động lại service này nếu nó bị dừng
+    environment: # Biến môi trường để cấu hình MySQL khi khởi tạo
+      MYSQL_DATABASE: kilogram # Tạo database tên là kilogram
+      MYSQL_ROOT_PASSWORD: password # Đặt mật khẩu cho user root
+    ports: # Ánh xạ cổng (chủ yếu để tiện debug từ máy thật, không bắt buộc cho web service kết nối)
+      - "3306:3306"
+    # volumes: # (Tùy chọn) Để lưu trữ dữ liệu MySQL bền vững
+    #   - db_data:/var/lib/mysql
+
+# (Tùy chọn) Định nghĩa volume để lưu trữ dữ liệu database
+# volumes:
+#   db_data:
