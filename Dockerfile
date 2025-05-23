@@ -26,7 +26,7 @@ COPY . .
 # Giá trị này sẽ được sử dụng nếu không có giá trị nào khác được cung cấp khi chạy container.
 # Trong thực tế, đây thường là localhost để phát triển, nhưng sẽ được ghi đè
 # để trỏ tới Cloud SQL hoặc service db trong Docker Compose.
-ENV DATABASE_URL=mysql+pymysql://root:@localhost:3306/kilogram
+ENV DATABASE_URL=mysql+pymysql://USERNAME:PASSWORD@CLOUD_SQL_PUBLIC_IP:3306/DATABASE_NAME
 # Đặt biến môi trường cho Flask biết file chính của ứng dụng.
 ENV FLASK_APP=main
 
