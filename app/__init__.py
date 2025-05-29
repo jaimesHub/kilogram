@@ -9,20 +9,20 @@ from flask_sqlalchemy import SQLAlchemy
 # --- Prometheus Metrics ---
 # Example: Counting the number of request by METHOD and ENDPOINT
 REQUEST_COUNT = Counter(
-    'kilogram_http_requests_total',
+    'kilogram_http_requests_total_test',
     'Total number of HTTP requests',
     ['method', 'endpoint']
 )
 
 # Example: Counting the number of posts created
 POSTS_CREATED = Counter(
-    'kilogram_posts_created_total',
+    'kilogram_posts_created_total_test',
     'Number of posts created'
 )
 
 # Example: Measuring the latency of HTTP requests
 REQUEST_LATENCY = Histogram(
-    'kilogram_http_request_duration_seconds',
+    'kilogram_http_request_duration_seconds_test',
     'HTTP Request latency',
     ['method', 'endpoint']
 )
