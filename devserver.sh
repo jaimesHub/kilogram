@@ -29,6 +29,9 @@ python main.py # run on PORT 3000
 # curl -X GET "http://localhost:3000/api/users/5/profile" \
 #      -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 
+# curl -X GET "http://localhost:3000/api/users/profile" \
+#      -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
 # curl -X POST "http://localhost:3000/api/users/5/follow" \
 #      -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 

@@ -1,3 +1,7 @@
+import cProfile
+import pstats
+import io # Working with stream in memory
+
 from flask import Blueprint, request
 
 from app.utils import api_response, token_required
@@ -12,8 +16,36 @@ user_bp = Blueprint('user', __name__)
 @token_required
 def get_profile(current_user):
     """UC04: Get the profile of the current user."""
+
     # Get the username from the JWT token
     return api_response(data=current_user.to_dict())
+
+    # # --- Start Profiling ---
+    # profiler = cProfile.Profile()
+    # profiler.enable()
+
+    # response_data = current_user.to_dict(viewer=current_user)
+
+    # # --- End Profiling ---
+    # profiler.disable()
+
+    # # --- Save and display the profiling's result ---
+    # # Creating a stream in memory for saving the output of pstats
+    # s = io.StringIO()
+    
+    # # Organizing by cumulative time
+    # ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+    # ps.print_stats() # Print the stream
+
+    # # Print profiling's result to the console of server Flask for observing
+    # # Or we can save as a file:
+    # # with open('profile_results.prof', 'w') as f:
+    # #     f.write(s.getvalue())
+    # print("---------------- PROFILING RESULTS FOR /api/user/profile ----------------")
+    # print(s.getvalue())
+    # print("-------------------------------------------------------------------------")
+    
+    # return api_response(data=response_data)
 
 @user_bp.route('/profile', methods=['PUT'])
 @token_required
