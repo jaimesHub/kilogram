@@ -7,6 +7,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=./credentials/kilogram-backend-c8031c5797b
 
 # python -m flask --app main run --debug
 python main.py # run on PORT 3000
+# gunicorn --bind 0.0.0.0:3000 main:app # FOR LOCUST
 
 # API Testing manually
 # curl -X POST "http://localhost:3000/api/auth/register" \
