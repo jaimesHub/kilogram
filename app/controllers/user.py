@@ -1,6 +1,6 @@
-import cProfile
-import pstats
-import io # Working with stream in memory
+# import cProfile
+# import pstats
+# import io # Working with stream in memory
 
 from flask import Blueprint, request
 
@@ -9,6 +9,10 @@ from app import db
 from app.models.user import User
 from app.models.post import Post
 from app.models.follow import Follow
+
+import cProfile
+import pstats
+import io
 
 user_bp = Blueprint('user', __name__)
 
@@ -46,6 +50,28 @@ def get_profile(current_user):
     # print("-------------------------------------------------------------------------")
     
     # return api_response(data=response_data)
+
+    # # Initializing the profiler
+    # pr = cProfile.Profile()
+    # pr.enable()  # Start collecting data
+
+    # # --- Main Logic Of API ---
+    # response = api_response(data=current_user.to_dict(viewer=current_user))
+    # # --- End of main logic ---
+
+    # pr.disable()  # Stop collecting data
+
+    # # Saving profiling's result as a file .prof
+    # s = io.StringIO()
+    # sortby = 'cumulative' # Ordering by cumulative time (thời gian tích lũy)
+    # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    # ps.dump_stats(filename='profile_get_profile.prof') # Save file
+
+    # # You can print the console for briefly checking, but SnakeViz will be more visualized
+    # # print(s.getvalue()) 
+    
+    # return response
+
 
 @user_bp.route('/profile', methods=['PUT'])
 @token_required
