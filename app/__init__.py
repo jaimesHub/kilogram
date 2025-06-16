@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 from datetime import timedelta
+from config.oauth_config import init_oauth
 
 # Load environment variables
 load_dotenv()
@@ -53,29 +54,53 @@ ABSOLUTE_UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, UPLOAD_FOLDER)
 def create_app():
     app = Flask(__name__)
 
+    # Get dynamic OAuth configuration
+    from config.dynamic_config import get_dynamic_oauth_config
+    oauth_config = get_dynamic_oauth_config()
+
     # Configuration
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-very-secure-secret-key")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+    
     # JWT Configuration
     app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "jwt-secret-string")
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=60)
-
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
+    
     # OAuth Configuration
     app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET")
-    app.config["FACEBOOK_CLIENT_ID"] = os.environ.get("FACEBOOK_CLIENT_ID")
-    app.config["FACEBOOK_CLIENT_SECRET"] = os.environ.get("FACEBOOK_CLIENT_SECRET")
-    app.config["OAUTH_REDIRECT_URI"] = os.environ.get("OAUTH_REDIRECT_URI", "http://localhost:5000")
+    # app.config["OAUTH_REDIRECT_URI"] = os.environ.get("OAUTH_REDIRECT_URI", "http://localhost:5000")
+    app.config["OAUTH_REDIRECT_URI"] = oauth_config['base_url']
+    app.config["OAUTH_CALLBACK_URI"] = oauth_config['redirect_uri']
+    
+    # Frontend URL for redirects
+    # app.config["FRONTEND_URL"] = oauth_config['frontend_url']
 
     # Security
     app.config["ENCRYPTION_KEY"] = os.environ.get("ENCRYPTION_KEY")
+
+    # Debug OAuth URLs
+    app.logger.info(f">>> OAuth Base URL: {oauth_config['base_url']}")
+    app.logger.info(f">>> OAuth Redirect URI: {oauth_config['redirect_uri']}")
 
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
+
+    # Initialize OAuth
+    oauth, google = init_oauth(app)
+    app.oauth = oauth
+
+    # Add middleware to log request info for debugging
+    @app.before_request
+    def log_request_info():
+        if '/api/auth/google' in request.path:
+            app.logger.info(f"Request URL: {request.url}")
+            app.logger.info(f"Request Host: {request.headers.get('Host')}")
+            app.logger.info(f"X-Forwarded-Host: {request.headers.get('X-Forwarded-Host')}")
+            app.logger.info(f"X-Forwarded-Proto: {request.headers.get('X-Forwarded-Proto')}")
 
     # Import models to ensure they're registered with SQLAlchemy
     from app.models import user, post, like, follow, social_account
@@ -107,6 +132,12 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix='/api/users')
     app.register_blueprint(post_bp, url_prefix='/api/posts')
     app.register_blueprint(upload_bp, url_prefix='/api/upload')
+
+    # Error handlers for OAuth
+    @app.errorhandler(500)
+    def handle_500(e):
+        app.logger.error(f"❌ Internal server error: {str(e)}")
+        return {'error': 'Internal server error'}, 500
 
     # --- Tạo endpoint /metrics ---
     # Sử dụng DispatcherMiddleware để phục vụ endpoint /metrics riêng biệt

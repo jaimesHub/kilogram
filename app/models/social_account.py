@@ -59,7 +59,7 @@ class SocialAccount(db.Model):
     
     def update_token(self, access_token, refresh_token=None, expires_at=None):
         """Update OAuth tokens"""
-        from app.utils.crypto_utils import encrypt_token
+        from app._utils.crypto_utils import encrypt_token
         
         self.access_token = encrypt_token(access_token)
         if refresh_token:
@@ -73,5 +73,5 @@ class SocialAccount(db.Model):
         if not self.access_token:
             return None
         
-        from app.utils.crypto_utils import decrypt_token
+        from app._utils.crypto_utils import decrypt_token
         return decrypt_token(self.access_token)
