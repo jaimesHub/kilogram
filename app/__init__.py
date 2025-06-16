@@ -6,6 +6,13 @@ import time
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 
+from flask_migrate import Migrate
+from dotenv import load_dotenv
+from datetime import timedelta
+
+# Load environment variables
+load_dotenv()
+
 # --- Prometheus Metrics ---
 # Example: Counting the number of request by METHOD and ENDPOINT
 REQUEST_COUNT = Counter(
@@ -34,8 +41,9 @@ REQUEST_LATENCY = Histogram(
 # ) # Gauge phức tạp hơn, cần cơ chế cập nhật
 
 # Initialize extensions
-jwt = JWTManager()
 db = SQLAlchemy()
+migrate = Migrate()
+jwt = JWTManager()
 
 UPLOAD_FOLDER = 'uploads'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -44,10 +52,33 @@ ABSOLUTE_UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, UPLOAD_FOLDER)
 
 def create_app():
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "your-very-secure-secret-key"
+
+    # Configuration
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-very-secure-secret-key")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-    jwt.init_app(app)
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # JWT Configuration
+    app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "jwt-secret-string")
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=60)
+
+    # OAuth Configuration
+    app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID")
+    app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET")
+    app.config["FACEBOOK_CLIENT_ID"] = os.environ.get("FACEBOOK_CLIENT_ID")
+    app.config["FACEBOOK_CLIENT_SECRET"] = os.environ.get("FACEBOOK_CLIENT_SECRET")
+    app.config["OAUTH_REDIRECT_URI"] = os.environ.get("OAUTH_REDIRECT_URI", "http://localhost:5000")
+
+    # Security
+    app.config["ENCRYPTION_KEY"] = os.environ.get("ENCRYPTION_KEY")
+
+    # Initialize extensions with app
     db.init_app(app)
+    migrate.init_app(app, db)
+    jwt.init_app(app)
+
+    # Import models to ensure they're registered with SQLAlchemy
+    from app.models import user, post, like, follow, social_account
 
     # --- Middleware để thu thập metrics request cơ bản ---
     @app.before_request
@@ -68,15 +99,13 @@ def create_app():
 
     # --- Import và register blueprints ---
     from app.controllers.auth import auth_bp
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-
     from app.controllers.user import user_bp
-    app.register_blueprint(user_bp, url_prefix='/api/users')
-
     from app.controllers.post import post_bp
-    app.register_blueprint(post_bp, url_prefix='/api/posts')
-
     from app.controllers.upload import upload_bp
+
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(user_bp, url_prefix='/api/users')
+    app.register_blueprint(post_bp, url_prefix='/api/posts')
     app.register_blueprint(upload_bp, url_prefix='/api/upload')
 
     # --- Tạo endpoint /metrics ---
