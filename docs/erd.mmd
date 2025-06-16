@@ -1,0 +1,56 @@
+erDiagram
+    USERS {
+        int id PK
+        varchar username UK "NOT NULL"
+        varchar email UK "NOT NULL"
+        varchar password_hash "NOT NULL"
+        varchar fullname
+        text bio
+        varchar profile_picture "DEFAULT default.jpg"
+        varchar signup_method "DEFAULT username"
+        int created_at
+        int updated_at
+    }
+    
+    SOCIAL_ACCOUNTS {
+        int id PK
+        int user_id FK "NOT NULL"
+        varchar provider "NOT NULL"
+        varchar provider_id "NOT NULL"
+        varchar provider_email
+        text access_token
+        text refresh_token
+        int expires_at
+        json profile_data
+        int created_at "NOT NULL"
+        int updated_at "NOT NULL"
+    }
+    
+    POSTS {
+        int id PK
+        int user_id FK "NOT NULL"
+        varchar image_url "NOT NULL"
+        text caption
+        boolean deleted "DEFAULT FALSE"
+        int created_at
+        int updated_at
+    }
+    
+    LIKES {
+        int user_id PK,FK "NOT NULL"
+        int post_id PK,FK "NOT NULL"
+        int created_at "NOT NULL"
+    }
+    
+    FOLLOWS {
+        int follower_id PK,FK
+        int following_id PK,FK
+        int created_at
+    }
+
+    USERS ||--o{ SOCIAL_ACCOUNTS : "has many"
+    USERS ||--o{ POSTS : "creates"
+    USERS ||--o{ LIKES : "gives"
+    USERS ||--o{ FOLLOWS : "as follower"
+    USERS ||--o{ FOLLOWS : "as following"
+    POSTS ||--o{ LIKES : "receives"

@@ -12,3 +12,4 @@ instance/
 Thumbs.db
 .idx
 credentials/
+backup
